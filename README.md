@@ -8,7 +8,7 @@ The Unofficial Guide uses the campus_life corpus to answer student questions fro
 
 ## What This Does
 
-I picked the campus_life corpus because the documents are short student-written posts and administrative notes, which makes it a good fit for a retrieval system built around quick facts and direct answers. The system loads those documents, splits them into meaningful chunks, embeds each chunk, retrieves the closest matches to a question, and then answers using only those retrieved excerpts. It is designed for questions like whether the housing lottery is random, whether a meal plan can be changed after the first week, or how declaring a major actually works.
+I picked the campus_life corpus because the documents are short student-written posts and administrative notes, which makes it a good fit for a retrieval system built around quick facts and direct answers. The system loads those documents, splits them into meaningful chunks, embeds each chunk, retrieves the closest matches to a question, and then answers using only those retrieved excerpts. It is designed for questions like whether the housing lottery is random, whether a meal plan can be changed after the first week, or how declaring a major actually works. This is the kind of “real student knowledge” search the project is built to support.
 
 ## Chunking Strategy
 

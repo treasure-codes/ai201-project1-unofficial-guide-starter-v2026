@@ -26,7 +26,8 @@ contains the answer.
 The corpus is short and factual; most usable answers sit in a single sentence, so
 I expect the retrieval layer to surface at least one matching chunk on most of my
 questions. One hard question is acceptable because a few documents mention the same
-rule in different ways.
+rule in different ways, and a system that misses one tricky topic is still useful
+for the rest of the corpus.
 
 ---
 
