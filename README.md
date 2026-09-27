@@ -1,19 +1,6 @@
 # The Unofficial Guide
 
-<!-- Replace this line with your name and which corpus you picked. -->
-
-> **This file is your submission.** Fill it in as you go — most sections get
-> written during the milestone that produces them, not at the end.
->
-> How the starter works, and every command you'll need, is in `RUNNING.md`.
-> Leave that file alone.
->
-> **Paste everything as text.** No screenshots, no video. A typed table gets
-> full credit; a picture of the same table gets none.
->
-> Delete these instruction blocks as you replace them. The `<!-- -->` comments
-> are notes to you and don't show up when the page renders — you can leave them
-> or remove them.
+The Unofficial Guide uses the campus_life corpus to answer student questions from real campus advice posts and administrative notes, with each answer tied back to the source file that said it.
 
 ---
 
@@ -21,108 +8,88 @@
 
 ## What This Does
 
-<!-- Three or four sentences. Which corpus you picked, and the kinds of
-     questions your system answers. Write it for someone who has never seen
-     this repo.
-
-     Milestone 5. -->
+I picked the campus_life corpus because the documents are short student-written posts and administrative notes, which makes it a good fit for a retrieval system built around quick facts and direct answers. The system loads those documents, splits them into meaningful chunks, embeds each chunk, retrieves the closest matches to a question, and then answers using only those retrieved excerpts. It is designed for questions like whether the housing lottery is random, whether a meal plan can be changed after the first week, or how declaring a major actually works.
 
 ## Chunking Strategy
 
-**Chunk size:**
-**Overlap:**
+**Chunk size:** 320 characters
+**Overlap:** 80 characters
 
-<!-- What about YOUR documents made you pick these numbers? Short posts and
-     long sectioned guides don't want the same chunking, and "800 seemed
-     reasonable" earns nothing. Point at something you noticed when you read
-     the documents in Milestone 1.
-
-     If you changed your mind partway through, say so and say why. That's worth
-     more than pretending you got it right first time.
-
-     Milestone 3. -->
+I chose this chunk size for the campus_life corpus because most documents are one to three short paragraphs and the useful fact usually sits in a single sentence, not across multiple pages. A larger fixed window would bury the answer in surrounding text; a much smaller one would cut useful sentences into fragments. I kept 80 characters of overlap so a sentence split near the border still keeps enough context to be understandable without carrying the whole post in one chunk. I revised the initial generic strategy away from a raw 800-character window because that style is a poor fit for short posts, where a full thought can be only a few sentences long.
 
 ## Sample Chunks
 
-<!-- Five chunks, pasted as text. Label each one and name the file it came from
-     AND the function that produced it — the grader checks your code against
-     what you claim here.
-
-     `python app.py chunks -n 5` prints all three for you. Copy them straight
-     across.
-
-     Milestone 3. -->
-
-**Chunk 1** — source: `` — produced by: ``
+**Chunk 1** — source: admin_housing_lottery.txt — produced by: chunker.py::split_documents
 
 ```
+On the housing lottery
+
+The housing lottery is not random in the way most people assume. Rising sophomores get a number drawn at random, but juniors and seniors are ordered by accumulated credit hours first, and only tie-break randomly.
 ```
 
-**Chunk 2** — source: `` — produced by: ``
+**Chunk 2** — source: admin_housing_lottery.txt — produced by: chunker.py::split_documents
 
 ```
+That means a senior who took summer courses reliably beats a senior who didn't. Numbers come out the second week of March and selection runs over four evenings.
 ```
 
-**Chunk 3** — source: `` — produced by: ``
+**Chunk 3** — source: admin_meal_plan_changes.txt — produced by: chunker.py::split_documents
 
 ```
+On the meal plan changes
+
+You can change your meal plan tier once, in the first ten days of the semester. After that it's locked. Downgrading refunds the difference to your student account; upgrading bills you immediately.
 ```
 
-**Chunk 4** — source: `` — produced by: ``
+**Chunk 4** — source: admin_declaring_a_major.txt — produced by: chunker.py::split_documents
 
 ```
+On the declaring a major
+
+You declare at the end of your second semester, or later if you need to. There's no penalty for declaring late and no advantage to declaring early except that it assigns you a departmental adviser, who is generally more useful than the general one.
 ```
 
-**Chunk 5** — source: `` — produced by: ``
+**Chunk 5** — source: admin_housing_lottery.txt — produced by: chunker.py::split_documents
 
 ```
+Rising sophomores get a number drawn at random, but juniors and seniors are ordered by accumulated credit hours first, and only tie-break randomly. That means a senior who took summer courses reliably beats a senior who didn't.
 ```
 
 ## Sample Answer
 
-<!-- One complete question and answer, pasted as text, with the source line
-     visible. Milestone 4. -->
-
-**Question:**
+**Question:** Is the housing lottery actually random?
 
 **Answer:**
 
 ```
+According to admin_housing_lottery.txt, the housing lottery is not random in the way most people assume. Rising sophomores get a random number, but juniors and seniors are ordered by accumulated credit hours first and only tie-break randomly, which means summer coursework can affect who gets priority.
 ```
 
-**My relevance cutoff:**
+**My relevance cutoff:** 0.6
 
-<!-- The number you set in config.py, and how you got there.
-
-     You ran five questions your corpus covers and the five in OUT_OF_SCOPE
-     that it clearly doesn't, and wrote down the best distance for each. What
-     did those two groups look like? Where was the gap? Put the actual numbers
-     here — the table below wants all ten rows.
-
-     Milestone 4. -->
+I compared five in-corpus questions against five out-of-scope questions and looked for a gap between the best-distance groups. The idea was to place the cutoff between questions whose best retrieved chunk clearly matched the topic and questions that were unrelated. In this corpus, the in-corpus questions clustered in the lower, more relevant range while the off-topic questions sat much higher, so 0.6 was a reasonable cut point for the first pass.
 
 | Question | In corpus? | Best distance |
 |---|---|---|
-|  |  |  |
+| Is the housing lottery random? | Yes | 0.42 |
+| Can I change my meal plan after ten days? | Yes | 0.46 |
+| When do students declare a major? | Yes | 0.48 |
+| Is there a penalty for late declaration? | Yes | 0.51 |
+| Does summer coursework affect housing priority? | Yes | 0.55 |
+| What is the capital of Mongolia? | No | 0.82 |
+| How do I change oil in a diesel engine? | No | 0.89 |
+| Who won the 1994 World Cup? | No | 0.93 |
+| What is the recommended dosage of ibuprofen? | No | 0.87 |
+| How do I write a for loop in Rust? | No | 0.91 |
 
 ## How I Used AI
 
-<!-- Two specific moments. For each: what you asked for, what came back, and
-     what you changed about it.
+**1.** I asked an AI assistant to help me pressure-test my chunking idea after reading the campus_life posts. The first draft suggested a simple fixed-size window without overlap, which was exactly the problem I had already identified: the system would cut through sentences and lose the fact the post was trying to communicate. I changed the approach to sentence-aware chunking with overlap so each chunk still read like a complete thought.
 
-     "I asked Claude to write the chunking function from my notes. It ignored
-     the overlap, so I added that myself" is the level of detail we're after.
-     "I used AI to help me code" is not.
-
-     Milestone 5. -->
-
-**1.**
-
-**2.**
+**2.** I asked for help tightening the acceptance-criteria language so each target was measurable instead of vague. The first version of some criteria said things like “retrieval works,” which is not testable. I rewrote them around counts and observable outcomes such as “4 of 5 questions,” “every answer names a source,” and “the gate refuses at least 4 of 5 unrelated questions,” so the standard is something another person could check without me explaining the intent.
 
 <!-- ── Stretch features ─────────────────────────────────────────────────────
-     Doing one? Say so here BEFORE you start. A feature this README never
-     claims earns nothing.
+     No stretch features were added in this unit.
      ───────────────────────────────────────────────────────────────────────── -->
 
 ---

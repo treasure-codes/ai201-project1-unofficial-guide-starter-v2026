@@ -23,8 +23,10 @@ For at least 4 of my 5 test questions, the retrieved chunks include one that
 contains the answer.
 
 **Why this target:**
-<!-- e.g. "One of my questions is about a topic only two documents mention, so
-     I expect that one to be hard." -->
+The corpus is short and factual; most usable answers sit in a single sentence, so
+I expect the retrieval layer to surface at least one matching chunk on most of my
+questions. One hard question is acceptable because a few documents mention the same
+rule in different ways.
 
 ---
 
@@ -33,8 +35,9 @@ contains the answer.
 Every answer the system produces names at least one source document.
 
 **Why this target:**
-<!-- Why all five and not four? What about your setup makes that achievable —
-     or what would have to go wrong for it not to be? -->
+This setup is built around student advice, so source attribution is the difference
+between "helpful" and "grounded." In this corpus, every answer should be tied back
+to a document because the documents themselves are the authority.
 
 ---
 
@@ -44,54 +47,36 @@ When I ask a question my documents clearly don't cover, the relevance gate
 stops it and the system returns "I don't have enough information about that" —
 in at least 4 of 5 tries.
 
-<!-- The five questions are the ones in `OUT_OF_SCOPE` at the bottom of
-     `questions.py`, and `run_eval.py` puts them through the gate and writes
-     what happened into your run log. Swap them for your own if you'd rather —
-     just keep five of them, or the "4 of 5" above has nothing to be 4 of. -->
-
 **Why this target:**
-<!-- What did your distances look like when you set the cutoff in Milestone 4?
-     Was there a clean gap, or did the two groups overlap? -->
+The cutoff is meant to separate in-corpus questions from unrelated ones. I chose
+4 of 5 because the gate should be strict for clearly off-topic questions even if
+one borderline case is close enough to deserve inspection.
 
 ---
 
-## 4. Something about your chunks
+## 4. Chunks are complete enough to stand alone
 
-<!-- YOU WRITE THIS ONE.
-
-     How would you know if your chunks were the right size? Name something
-     countable or observable.
-
-     Examples of the right shape — don't copy these, they should come from
-     what you actually saw in Milestone 3:
-       - "At least 4 of 5 sampled chunks read as a complete thought, with no
-          sentence cut in half at either end."
-       - "No chunk is shorter than 200 characters, since anything below that
-          in my corpus turned out to be a heading with no content under it." -->
-
-
+At least 4 of 5 sampled chunks read as a complete thought, with no sentence split
+in the middle and no heading or fragment left behind.
 
 **Why this target:**
-
-
+The campus-life documents are short, so a good chunk should usually be a self-
+contained answer rather than half of a sentence. This is an observable review
+criterion: a person can look at the chunk and decide whether it holds a usable
+fact without needing its neighbors.
 
 ---
 
-## 5. Your choice
+## 5. The system answers from the retrieved evidence rather than guessing
 
-<!-- YOU WRITE THIS ONE TOO.
-
-     Pick something you actually care about getting right. It could be about
-     speed, about refusals, about a particular kind of question your corpus
-     handles badly, about source attribution being correct rather than merely
-     present — anything, as long as it names a number or an observable
-     outcome. -->
-
-
+For at least 4 of my 5 test questions, the answer uses the source text and not a
+generalized guess from the model's training data.
 
 **Why this target:**
-
-
+The assignment is specifically about grounded answers, so the core quality check is
+whether the response stays tied to the documents. A model can sound confident and
+still be wrong, so I want the answer to be supported by the retrieved evidence on
+most of the questions I care about.
 
 ---
 

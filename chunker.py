@@ -22,6 +22,7 @@ to it, write down what you saw, and move on. That's a real observation about
 your pipeline, not giving up.
 """
 
+import re
 from dataclasses import dataclass
 
 import config
@@ -81,23 +82,68 @@ def fallback_split(
 
 
 def split_documents(documents: list[Document]) -> list[Chunk]:
-    """
-    Split documents into chunks. ⚠️ REPLACE THE BODY OF THIS IN MILESTONE 3.
+    """Chunk short, factual posts around sentence boundaries rather than raw character windows."""
+    chunk_size = config.CHUNK_SIZE
+    overlap = config.CHUNK_OVERLAP
 
-    Right now it just calls the fallback. That is the plain, generic behaviour
-    the brief is talking about.
+    if overlap >= chunk_size:
+        raise ValueError("overlap has to be smaller than chunk_size")
 
-    When you write your own strategy, set `produced_by` to
-    "chunker.py::split_documents" so your README's Sample Chunks section names
-    the right function. `app.py chunks` prints that string for you.
+    chunks: list[Chunk] = []
+    for doc in documents:
+        text = re.sub(r"\s+", " ", doc.text).strip()
+        if not text:
+            continue
 
-    Things worth thinking about before you write any code:
-      - Are your documents short posts or long guides?
-      - Is the useful information in one sentence, or spread over a paragraph?
-      - Would splitting on paragraph breaks keep more thoughts intact than
-        splitting on a character count?
-    """
-    return fallback_split(documents)
+        sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
+        if not sentences:
+            continue
+
+        current: list[str] = []
+        current_len = 0
+        index = 0
+
+        for sentence in sentences:
+            sentence_text = sentence.rstrip()
+            candidate = " ".join(current + [sentence_text]) if current else sentence_text
+            if current and len(candidate) > chunk_size:
+                chunk_text = " ".join(current).strip()
+                chunks.append(
+                    Chunk(
+                        text=chunk_text,
+                        source=doc.source,
+                        index=index,
+                        produced_by="chunker.py::split_documents",
+                    )
+                )
+                index += 1
+
+                overlap_sentences = []
+                overlap_chars = 0
+                for sent in reversed(current):
+                    overlap_chars += len(sent)
+                    overlap_sentences.append(sent)
+                    if overlap_chars >= overlap:
+                        break
+                overlap_sentences.reverse()
+                current = overlap_sentences + [sentence_text]
+                current_len = len(" ".join(current))
+                continue
+
+            current.append(sentence_text)
+            current_len = len(" ".join(current))
+
+        if current:
+            chunks.append(
+                Chunk(
+                    text=" ".join(current).strip(),
+                    source=doc.source,
+                    index=index,
+                    produced_by="chunker.py::split_documents",
+                )
+            )
+
+    return chunks
 
 
 def describe(chunks: list[Chunk]) -> str:
